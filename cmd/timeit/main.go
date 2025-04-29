@@ -1,11 +1,10 @@
 package main
 
 import (
+	timer "concurrency/internal/timeit"
 	"fmt"
 	"math/rand"
 	"time"
-	timer "timeWG/internal/timeit"
-
 )
 
 // начало решения
@@ -25,7 +24,7 @@ func main() {
 
 	const nIter = 96
 	for _, nWorkers := range []int{1, 2, 4, 16} {
-		elapsed := timer.TimeIt(nIter, nWorkers, fn)
+		elapsed := timer.Timeit(nIter, nWorkers, fn)
 		fmt.Printf("%d iterations, %d workers, took %dms\n", nWorkers*(nIter/nWorkers), nWorkers, elapsed)
 	}
 	// результаты могут отличаться

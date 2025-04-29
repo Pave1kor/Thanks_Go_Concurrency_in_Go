@@ -1,3 +1,3 @@
-module timeWG
+module concurrency
 
 go 1.24.2
