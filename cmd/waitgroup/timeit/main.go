@@ -1,7 +1,7 @@
 package main
 
 import (
-	timer "concurrency/internal/waitGroup/timeit"
+	timer "concurrency/internal/waitgroup/timeit"
 	"fmt"
 	"math/rand"
 	"time"
