@@ -3,7 +3,6 @@ package limiter
 import (
 	"errors"
 	"sync"
-	"time"
 )
 
 var ErrBusy = errors.New("busy")
@@ -14,43 +13,43 @@ var ErrCanceled = errors.New("canceled")
 // throttle следит, чтобы функция fn выполнялась не более limit раз в секунду.
 // Возвращает функции handle (выполняет fn с учетом лимита) и cancel (останавливает ограничитель).
 func Throttle(limit int, fn func()) (handle func() error, cancel func()) {
-	ch := make(chan struct{}, limit)
-	var err error
-	var mu sync.Mutex
-	open := true
-	ticker := time.NewTicker(time.Second)
-	for i := 0; i < limit; i++ {
-		ch <- struct{}{}
-	}
-	handle = func() error {
-		select {
-		case <-ticker.C:
-			mu.Lock()
-			open = true
-			mu.Unlock()
-		case _, ok := <-ch:
-			go func() {
-				if ok && !open {
-					fn()
-					ch <- struct{}{}
-					err = nil
-				} else {
-					err = ErrCanceled
-				}
-			}()
-			return err
-		default:
-			err = ErrBusy
-			open = false
-		}
-		return err
-	}
+    tokens := make(chan struct{}, limit)
+    for range limit {
+        tokens <- struct{}{}
+    }
 
-	cancel = func() {
-		ticker.Stop()
-		close(ch)
-	}
-	return
+    var (
+        mu     sync.Mutex
+        closed bool
+    )
+
+    handle = func() error {
+        mu.Lock()
+        if closed {
+            mu.Unlock()
+            return ErrCanceled
+        }
+        mu.Unlock()
+
+        select {
+        case <-tokens:
+            go func() {
+                defer func() { tokens <- struct{}{} }()
+                fn()
+            }()
+            return nil
+        default:
+            return ErrBusy
+        }
+    }
+
+    cancel = func() {
+        mu.Lock()
+        closed = true
+        mu.Unlock()
+    }
+
+    return
 }
 
 // конец решения
