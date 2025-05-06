@@ -17,19 +17,15 @@ func main() {
 		fmt.Println("work done")
 		wg.Done()
 	}
-	cancel := wererace.Delay(50*time.Millisecond, work)
-	cancel2 := wererace.Delay(50*time.Millisecond, work)
+	cancel := wererace.Delay(1*time.Millisecond, work)
 	defer cancel()
-	defer cancel2()
 
 	// отменяем работу через 20 мс c вероятностью 50%
 	time.Sleep(20 * time.Millisecond)
 	if rand.Intn(2) == 0 {
 		cancel()
-		cancel2()
 		fmt.Println("canceled")
 		wg.Done()
 	}
-
 	wg.Wait()
 }
